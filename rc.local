@@ -1,0 +1,76 @@
+#!/bin/sh -x
+#
+# WARNING: rc.local normally runs with "-e" which means stop on error.
+# This is been removed.  It may make it harder to detect errors.
+#
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+echo rc.local started > /home/pi/boot-status; sync
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+# anybody out there to help set the time?
+# wait for DHCP address, then go
+ntpdate -v -u -s -b pool.ntp.org &
+( sleep 12; ntpdate -v -u -s -b time.apple.com )&
+( sleep 360; ntpdate -v -u -s -b time.apple.com )&
+
+# set time zone if necessary
+# do it again in a while case the wifi is slow to come up.
+sh /home/pi/timeset.sh &
+(sleep 120 ; sh /home/pi/timeset.sh ; ntpdate -s -b time.apple.com )&
+
+/usr/sbin/alsactl restore 
+
+if expr `cat /home/pi/boot-status 2>/dev/null` : booting-before-sound 2> /dev/null
+    then
+    # We stopped after setting booting-before-sound
+    # That means sound is causing a crash, probably due to power consumption
+    #
+    if expr `cat /home/pi/boot-status 2>/dev/null` : emergency-lowvolume 2> /dev/null
+        then
+        # Even at low volume we crashed
+        echo sound-disabled > /home/pi/boot-status; sync
+        amixer sset 'PCM' 0%
+    else
+        # Try very low volume to reduce power consumption
+        #
+        echo emergency-lowvolume > /home/pi/boot-status; sync
+        amixer sset 'PCM' 20%
+        fi
+else
+    amixer sset 'PCM' 100%
+    echo booting-before-sound > /home/pi/boot-status; sync
+    # system seems to crash at this stage since boot-state file was not over-written
+    #
+    # If the power supply cannot supply ~2A this will make the box reboot
+    #
+    /usr/bin/mpg123 /home/pi/Hello/zeew.mp3 &
+    echo after-sound > /home/pi/boot-status; sync
+fi
+
+
+echo before-wget > /home/pi/boot-status; sync
+/usr/bin/wget -O - 'http://www.dudek.org/static/dudek/radiolog.cgi?reboot-hellobox' &
+
+cd /home/pi/Hello
+#/usr/bin/python /home/pi/Hello/hello.py > log1.txt 2> log2.txt &
+/usr/bin/python /home/pi/Hello/hello.py > /dev/null 2> /dev/null &
+/usr/bin/python /home/pi/Hello/webserver.py &
+sh keepalive.sh &
+echo complete > /home/pi/boot-status; sync
+
+exit 0
