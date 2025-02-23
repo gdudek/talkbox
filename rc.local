@@ -33,7 +33,7 @@ ntpdate -v -u -s -b pool.ntp.org &
 sh /home/pi/timeset.sh &
 (sleep 120 ; sh /home/pi/timeset.sh ; ntpdate -s -b time.apple.com )&
 
-/usr/sbin/alsactl restore 
+/usr/sbin/alsactl restore
 
 if expr `cat /home/pi/boot-status 2>/dev/null` : booting-before-sound 2> /dev/null
     then
@@ -64,7 +64,6 @@ fi
 
 
 echo before-wget > /home/pi/boot-status; sync
-/usr/bin/wget -O - 'http://www.dudek.org/static/dudek/radiolog.cgi?reboot-hellobox' &
 
 cd /home/pi/Hello
 #/usr/bin/python /home/pi/Hello/hello.py > log1.txt 2> log2.txt &
