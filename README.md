@@ -11,6 +11,6 @@ System state is saved and restored so that the file usage pattern and other stat
 The file hello.py serves as the main loop and handles GPIO processing to detect button pushes, lid openings, and vibration.
 The file soundOfTheDay.py handles saving state and playing random sounds of various classes.
 
-![alt text](https://github.com/gdudek/talkbox/blob/master/hellobox-talkbox-demo.mp4?raw=true)
+![alt text](https://github.com/gdudek/talkbox/blob/master/hellobox-talkbox-IMG_20171227_003344_1.jpgraw=true)
 
 
