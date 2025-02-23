@@ -9,9 +9,8 @@ import signal
 import traceback, subprocess
 
 REQUESTINTERVAL = 7*60*60 #10 min    # how often to make a recurring noise if we have been abandoned for a long time: 7*60*60 = 7 hours
-LONGTIME        = 15*24*(60*60)      # how long in seconds counts as a long time since we were opened: 5*24*(60*60)= 5 days
+LONGTIME        = 15*24*(60*60)      # how long in seconds coulds a a long time since we were opened: 5*24*(60*60)= 5 days
 STAY_ON_DELAY   = 300                # how long to light button when getting attention
-nclicksToUnlockButtonLight = 180     # after being clicked this many times, the red button lights when playing sounds
 debug = 0
 lastOpenTime = time.time()           # last time open was opened or red button pressed
 
@@ -25,11 +24,12 @@ if debug:
     print("LONGTIME:",LONGTIME," = ",LONGTIME/60/60.,"hours","or",LONGTIME/60,"minutes")
 
 lidPin = 17 # Broadcom pin 17 (P1 pin 11)
-vibroPin = 27   # pin attached to vibration sensor
+vibroPin = 27 
 #
 redButtonIn  = 23
 redButtonLED = 25
 #
+dmitriyButtonLED = 24 
 dmitriyButtonPin = 6 
 
 soundOfTheDay.nclicks = { 'lid':0, 'red':0, 'dmitriy': 0, 'vibroPin': 0 }
@@ -69,7 +69,7 @@ def turnOffhandler(signum, frame):
     global lastOpenTime
     global flashMode
     allLEDsOff()
-    if flashMode:  # after turning off, we will turn back on shortly!!
+    if flashMode:
             signal.signal(signal.SIGALRM,  turnOnhandler )
             signal.alarm(2)
 
@@ -126,11 +126,9 @@ def got_button_interrupt(channel):
         if debug: print(time.ctime())
         if debug: print("Returned from playToday()")
         if lightButtonWhileSoundPlaying: GPIO.output(redButtonLED,GPIO.LOW)
-
-
-        if soundOfTheDay.nclicks['red']==nclicksToUnlockButtonLight:
+        if soundOfTheDay.nclicks['red']==200:
                 soundOfTheDay.playSpecialFile("unlocked.mp3")
-        if soundOfTheDay.nclicks['red']>=nclicksToUnlockButtonLight:
+        if soundOfTheDay.nclicks['red']>=200:
             lightButtonWhileSoundPlaying = 1
         while GPIO.input(redButtonIn)==0:
             if GPIO.input(dmitriyButtonPin)==0:
@@ -212,7 +210,7 @@ def runmain():
             now = time.time()
             # box closed
             if (GPIO.input(lidPin) == 1) and \
-                (now - lastOpenTime)>LONGTIME and (int(now) % REQUESTINTERVAL==0): # Sloppy: assumes loop below takes > 1 second, but we get checked more often than that!!
+                (now - lastOpenTime)>LONGTIME and (int(now) % REQUESTINTERVAL==0):
                     if debug: 
                         print("Requesting attention since unopened for",(now - lastOpenTime)/60,"minutes","mod:",int(now)%REQUESTINTERVAL)
                     # request attention
@@ -225,6 +223,7 @@ def runmain():
                         flashMode=1
                     # turn off the button in a while if nobody pays attention
                     signal.alarm(STAY_ON_DELAY)
+
 
                     soundOfTheDay.playRandomSpecialFileClass("attention")
                     GPIO.add_event_detect(vibroPin, GPIO.FALLING, callback=got_gpio_interrupt, bouncetime=700)
@@ -240,7 +239,7 @@ def runmain():
                 soundOfTheDay.nclicks['lid'] += 1
                 soundOfTheDay.playToday( )
                 lastOpenTime = time.time()
-        flashMode=0
+		flashMode=0
 
         # while box remains open
         n = 1

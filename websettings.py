@@ -1,3 +1,7 @@
+"""
+   Allow settings to be adjusted via web interface.
+"""
+
 import sys,os
 import subprocess
 import soundOfTheDay
@@ -62,32 +66,34 @@ signal.signal(signal.SIGUSR2, signal.SIG_IGN )
 os.system("killall -SIGUSR1 python")  # cause a checkpoint
 time.sleep(2)
 
-print "<b>Status of boot process:</b>"
-print open("/home/pi/boot-status").read()
-print
+print("<b>Status of boot process:</b>")
+try: print(open("/home/pi/boot-status").read())
+except: print("No boot log available (checked for '/home/pi/boot-status')")
+
+print()
 
 webSettings(sys.stdout)
 soundOfTheDay.loadState("playerState",)
-print "<b>Current state (saved on disk)</b>"
-print "<pre>"
+print("<b>Current state (saved on disk)</b>")
+print("<pre>")
 for i in soundOfTheDay.savelist+["versionNumber"]:
    t = eval("soundOfTheDay."+i)
-   print str(i)+":", t,
+   print(str(i)+":", t, end=' ')
    if "Time" in i or "time" in i:
        if type(t) == type([]):
-          print "==> [",
+          print("==> [", end=' ')
           for j in t:
               if not j:
-                  print "0,",
+                  print("0,", end=' ')
                   continue
-              try: print time.ctime(float(j)),",",
+              try: print(time.ctime(float(j)),",", end=' ')
               except: pass
-          print "]"
+          print("]")
        else:
-           try: print " => ",time.ctime(float(t))
-           except: print ""
-   else: print ""
+           try: print(" => ",time.ctime(float(t)))
+           except: print("")
+   else: print("")
 
-print "</pre>"
+print("</pre>")
 finish(sys.stdout)
 
